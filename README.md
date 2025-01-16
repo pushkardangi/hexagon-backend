@@ -2,16 +2,12 @@
 
 This is the backend for an AI-powered image generation web application. It uses the OpenAI API to generate images based on user prompts, stores the generated images in Cloudinary, and uses MongoDB to store user profiles and Cloudinary secure URLs. The backend is built using **Node.js** and **Express**.
 
----
-
 ## Features
 
 - Generate images using the OpenAI API.
 - Store generated images in Cloudinary for efficient storage and retrieval.
 - Store user profiles and image data in MongoDB.
 - Expose RESTful endpoints for frontend integration.
-
----
 
 ## Prerequisites
 
@@ -25,8 +21,6 @@ You will also need:
 1. An OpenAI API key.
 2. A Cloudinary account with API credentials.
 3. A MongoDB database.
-
----
 
 ## Installation
 
@@ -72,8 +66,6 @@ You will also need:
 | `CLOUDINARY_API_KEY`   | API key for Cloudinary              |
 | `CLOUDINARY_API_SECRET`| API secret for Cloudinary           |
 
----
-
 ## Usage
 
 1. Start the server:
@@ -84,11 +76,9 @@ You will also need:
 
 2. The backend will run on `http://localhost:3000` by default.
 
----
-
 ## Project Structure
 
-```project-structure
+```plaintext
 
 ├── src
 │   ├── config
@@ -108,8 +98,6 @@ You will also need:
 ├── package-lock.json       # Detailed tree of dependencies
 └── README.md               # Project documentation
 ```
-
----
 
 ## License
 
