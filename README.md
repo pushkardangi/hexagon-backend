@@ -1,6 +1,8 @@
-# Image Generation Web App Backend
+# Hexagon - Image Generation Web App Backend
 
 This is the backend for an AI-powered image generation web application. It uses the OpenAI API to generate images based on user prompts, stores the generated images in Cloudinary, and uses MongoDB to store user profiles and Cloudinary secure URLs. The backend is built using **Node.js** and **Express**.
+
+[Hexagon Frontend](https://github.com/pushkardangi/hexagon-client)
 
 ## Features
 
