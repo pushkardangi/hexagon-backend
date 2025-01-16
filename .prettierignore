@@ -1,0 +1,32 @@
+# Ignore dependencies
+node_modules/
+package-lock.json
+
+# Ignore build and output directories
+dist/
+build/
+out/
+
+# Ignore VS Code files
+/.vscode
+
+# Ignore environment variable files
+*.env
+.env
+.env.*.local
+
+# Ignore test coverage and logs
+coverage/
+logs/
+*.log
+
+# Ignore MongoDB data or dump folders
+data/
+dump/
+
+# Ignore generated documentation
+docs/
+
+# Ignore specific file types
+*.min.js
+*.lock

@@ -1,0 +1,27 @@
+{
+  "name": "hexagon-backend",
+  "version": "1.0.0",
+  "description": "backend for image generation application using openai api",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon index.js"
+  },
+  "keywords": [
+    "backend",
+    "openai",
+    "api"
+  ],
+  "author": "Pushkar Dangi",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongoose": "^8.9.5",
+    "openai": "^4.78.1"
+  }
+}
