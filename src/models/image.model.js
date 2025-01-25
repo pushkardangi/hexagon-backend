@@ -6,6 +6,10 @@ const imageSchema = new Schema(
       type: String,
       required: true,
     },
+    publicId: {
+      type: String,
+      required: true,
+    },
     prompt: {
       type: String,
       required: true,
@@ -28,9 +32,10 @@ const imageSchema = new Schema(
     },
     style: {
       type: String,
-      enum: ["natural", "vivid"],
+      enum: ["simple","natural", "vivid"],
+      required: true,
     },
-    owner: {
+    ownerId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
