@@ -29,8 +29,8 @@ You will also need:
 1. Clone the repository:
 
    ```bash
-   git clone <repository-url>
-   cd <repository-folder>
+   git clone https://github.com/pushkardangi/hexagon-backend.git
+   cd hexagon-backend
    ```
 
 2. Install dependencies:
@@ -50,6 +50,11 @@ You will also need:
 
    OPENAI_API_KEY=<your-openai-api-key>
 
+   ACCESS_TOKEN_SECRET=<your-access-token-secret>
+   ACCESS_TOKEN_EXPIRY=<access-token-expiry-time>
+   REFRESH_TOKEN_SECRET=<your-refresh-token-secret>
+   REFRESH_TOKEN_EXPIRY=<refresh-token-expiry-time>
+
    CLOUDINARY_CLOUD_NAME=<your-cloudinary-cloud-name>
    CLOUDINARY_API_KEY=<your-cloudinary-api-key>
    CLOUDINARY_API_SECRET=<your-cloudinary-api-secret>
@@ -64,6 +69,10 @@ You will also need:
 | `MONGODB_URI`          | MongoDB connection string           |
 | `DB_NAME`              | Name of the MongoDB database        |
 | `OPENAI_API_KEY`       | API key for OpenAI                  |
+| `ACCESS_TOKEN_SECRET`  | Access token secret (random keys)   |
+| `ACCESS_TOKEN_EXPIRY`  | Access token expiry time            |
+| `REFRESH_TOKEN_SECRET` | Refresh token secret (random keys)  |
+| `REFRESH_TOKEN_EXPIRY` | Refresh token expiry time           |
 | `CLOUDINARY_CLOUD_NAME`| Your Cloudinary cloud name          |
 | `CLOUDINARY_API_KEY`   | API key for Cloudinary              |
 | `CLOUDINARY_API_SECRET`| API secret for Cloudinary           |
@@ -84,6 +93,7 @@ You will also need:
 
 ├── src
 │   ├── config
+│   ├── constants
 │   ├── controllers
 │   ├── middlewares
 │   ├── models
