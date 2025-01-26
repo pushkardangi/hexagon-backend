@@ -9,7 +9,7 @@ const refreshTokenCookieOptions = {
   httpOnly: true,
   secure: true,
   sameSite: "None",
-  path: "/api/v1/users/renew-tokens"
+  path: "/api/v1/auth/renew-tokens"
 };
 
 export {
