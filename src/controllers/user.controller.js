@@ -86,4 +86,30 @@ const loginUser = asyncHandler(async (req, res) => {
 
 });
 
-export { registerUser, loginUser };
+const logoutUser = asyncHandler(async (req, res) => {
+  const loggedInUser = req.user;
+
+  const updateUser = await User.findByIdAndUpdate(
+    loggedInUser?._id,
+    { $set: { refreshToken: null } },
+    { new: true }
+  );
+
+  if (!updateUser) {
+    throw new apiError(400, "User failed to log out!");
+  }
+
+  const cookieOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "None",
+  };
+
+  res
+    .status(200)
+    .clearCookie("accessToken", cookieOptions)
+    .clearCookie("refreshToken", cookieOptions)
+    .json(new apiResponse(200, {}, "User logged out successfully."));
+});
+
+export { registerUser, loginUser, logoutUser };
