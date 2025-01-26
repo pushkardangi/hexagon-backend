@@ -1,0 +1,18 @@
+const accessTokenCookieOptions = {
+  httpOnly: true,
+  secure: true,
+  sameSite: "None",
+  path: "/api"
+};
+
+const refreshTokenCookieOptions = {
+  httpOnly: true,
+  secure: true,
+  sameSite: "None",
+  path: "/api/v1/users/renew-tokens"
+};
+
+export {
+  accessTokenCookieOptions,
+  refreshTokenCookieOptions
+};

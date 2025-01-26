@@ -8,10 +8,15 @@ export const verifyUser = asyncHandler(async (req, res, next) => {
     const token = req.cookies?.accessToken;
 
     if (!token) {
-      throw new apiError(401, "Unauthorized request! Token not available!");
+      throw new apiError(401, "Unauthorized! Access token is missing!");
     }
 
-    const decodedInfo = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    let decodedInfo;
+    try {
+      decodedInfo = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    } catch (error) {
+      throw new apiError(401, "Access Token Expired!");
+    }
 
     const user = await User.findById(decodedInfo?._id).select("-password -refreshToken");
 
