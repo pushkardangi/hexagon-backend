@@ -32,6 +32,38 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new apiResponse(201, {}, "User registered successfully."));
 });
 
+const getUserProfile = asyncHandler(async (req, res) => {
+  const user = req?.user;
+
+  if (!user) {
+    throw new apiError(404, "User not found. Please log in!");
+  }
+
+  if (!user.id || !user.email) {
+    throw new apiError(500, "User data is incomplete. Please contact support!");
+  }
+
+  res
+    .status(200)
+    .json(new apiResponse(200, user, "User profile fetched successfully."));
+});
+
+const updateUserProfile = asyncHandler(async(req, res) => {
+
+});
+
+const deactivateUserAccount = asyncHandler(async(req, res) => {
+
+});
+
+const deleteUserAccount = asyncHandler(async(req, res) => {
+
+});
+
 export {
   registerUser,
+  getUserProfile,
+  updateUserProfile,
+  deactivateUserAccount,
+  deleteUserAccount,
 };
