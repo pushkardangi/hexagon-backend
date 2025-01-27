@@ -102,6 +102,7 @@ You will also need:
 ├── app.js                  # Main app setup
 ├── index.js                # Entry point of the application
 ├── .env                    # Environment variables
+├── .env.vault              # Securely stored environment variables
 ├── .gitattributes          # Git configuration
 ├── .gitignore              # Files and directories to ignore in Git
 ├── .prettierignore         # Files and directories to ignore by Prettier
