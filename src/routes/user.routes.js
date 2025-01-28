@@ -8,7 +8,7 @@ import { verifyUser } from "../middlewares/auth.middleware.js";
 import {
   registerUser,
   getUserProfile,
-  updateUserProfile,
+  updateUserFullname,
   deactivateUserAccount,
   deleteUserAccount,
 } from "../controllers/user.controller.js";
@@ -20,8 +20,9 @@ router.route("/register").post(registerUser);
 router
   .route("/profile")
   .get(verifyUser, getUserProfile)
-  .put(verifyUser, updateUserProfile)
   .patch(verifyUser, deactivateUserAccount)
   .delete(verifyUser, deleteUserAccount);
+
+router.patch("/update/fullname", verifyUser, updateUserFullname);
 
 export default router;

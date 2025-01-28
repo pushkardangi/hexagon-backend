@@ -48,8 +48,35 @@ const getUserProfile = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, user, "User profile fetched successfully."));
 });
 
-const updateUserProfile = asyncHandler(async(req, res) => {
+const updateUserFullname = asyncHandler(async(req, res) => {
 
+  const { firstName, lastName } = req?.body;
+  const { _id: userId } = req?.user;
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new apiError(400, "User not found! Invalid user id!");
+  }
+
+  firstName && (user.firstName = firstName);
+  lastName && (user.lastName = lastName);
+
+  const userSaved = await user.save({validateBeforeSave: false});
+
+  if (!userSaved) {
+    throw new apiError(500, "Failed to save the user data!")
+  }
+
+  const responseData = {
+    userId: userSaved._id,
+    firstName: userSaved.firstName,
+    lastName: userSaved.lastName,
+  };
+
+  res
+    .status(200)
+    .json(new apiResponse(200, responseData, "User fullname updated successfully."));
 });
 
 const deactivateUserAccount = asyncHandler(async(req, res) => {
@@ -63,7 +90,7 @@ const deleteUserAccount = asyncHandler(async(req, res) => {
 export {
   registerUser,
   getUserProfile,
-  updateUserProfile,
+  updateUserFullname,
   deactivateUserAccount,
   deleteUserAccount,
 };
