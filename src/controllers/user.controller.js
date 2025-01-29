@@ -2,6 +2,8 @@ import { User } from "../models/user.model.js";
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { uploadOnCloudinaryUsingStream, deleteFileOnCloudinary } from "../utils/cloudinary.js";
+import { maxFileSize, allowedFileTypes } from "../constants/avatar.constants.js";
 
 const registerUser = asyncHandler(async (req, res) => {
   const { firstName, lastName = null, email, password } = req.body;
@@ -79,6 +81,68 @@ const updateUserFullname = asyncHandler(async(req, res) => {
     .json(new apiResponse(200, responseData, "User fullname updated successfully."));
 });
 
+const updateUserAvatar = asyncHandler(async(req, res) => {
+
+  const { _id: userId, avatar: oldAvatarUrl } = req?.user;
+  const avatar = req?.file;
+
+  if (!userId){
+    throw new apiError(400, "User not found!")
+  }
+
+  if (!avatar) {
+    throw new apiError(400, "Avatar not found!");
+  }
+
+  if (avatar?.size > maxFileSize) {
+    throw new apiError(400, "File is greater than 5Mb!");
+  }
+
+  if (!allowedFileTypes.includes(avatar?.mimetype)) {
+    throw new apiError(400, "Invalid file type. Please upload an image!");
+  }
+
+  const cloudinaryResponse = await uploadOnCloudinaryUsingStream(
+    avatar?.buffer,
+    "image",
+    "openai/user-avatar",
+    ["avatar"],
+    true
+  );
+
+  if (!cloudinaryResponse?.secure_url) {
+    throw new apiError(500, "Failed to upload avatar on cloudinary!");
+  }
+
+  const { public_id: newAvatarPublicId, secure_url: newAvatarUrl } = cloudinaryResponse;
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { avatar: newAvatarUrl },
+    { new: true }
+  ).select("_id avatar");
+
+  if (!user) {
+    await deleteFileOnCloudinary(newAvatarPublicId);
+    throw new apiError(500, "Failed to update avatar!");
+  }
+
+  if (oldAvatarUrl){
+    const oldAvatarPublicId = "openai/user-avatar/" + oldAvatarUrl.split("/").pop().split(".")[0];
+    await deleteFileOnCloudinary(oldAvatarPublicId);
+  }
+
+  const responseData = {
+    userId: user._id,
+    avatar: newAvatarUrl,
+  };
+
+  res
+    .status(200)
+    .json(new apiResponse(200, responseData, "User avatar updated successfully."));
+
+});
+
 const deactivateUserAccount = asyncHandler(async(req, res) => {
 
 });
@@ -91,6 +155,7 @@ export {
   registerUser,
   getUserProfile,
   updateUserFullname,
+  updateUserAvatar,
   deactivateUserAccount,
   deleteUserAccount,
 };

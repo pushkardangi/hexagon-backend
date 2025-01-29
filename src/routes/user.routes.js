@@ -3,12 +3,14 @@ const router = Router();
 
 // middlewares
 import { verifyUser } from "../middlewares/auth.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
 
 // import controllers
 import {
   registerUser,
   getUserProfile,
   updateUserFullname,
+  updateUserAvatar,
   deactivateUserAccount,
   deleteUserAccount,
 } from "../controllers/user.controller.js";
@@ -24,5 +26,6 @@ router
   .delete(verifyUser, deleteUserAccount);
 
 router.patch("/update/fullname", verifyUser, updateUserFullname);
+router.patch("/update/avatar", verifyUser, upload.single("avatar"), updateUserAvatar);
 
 export default router;
