@@ -4,6 +4,7 @@ import { apiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinaryUsingStream, deleteFileOnCloudinary } from "../utils/cloudinary.js";
 import { maxFileSize, allowedFileTypes } from "../constants/avatar.constants.js";
+import { accessTokenCookieOptions, refreshTokenCookieOptions } from "../constants/cookieOptions.js";
 
 const registerUser = asyncHandler(async (req, res) => {
   const { firstName, lastName = null, email, password } = req.body;
@@ -145,6 +146,41 @@ const updateUserAvatar = asyncHandler(async(req, res) => {
 
 const deactivateUserAccount = asyncHandler(async(req, res) => {
 
+  const { _id: userId } = req?.user;
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new apiError(404, "User not found!");
+  }
+
+  if (user.accountStatus === "inactive") {
+    throw new apiError(400, "Account is already deactivated!");
+  }
+
+  if (user.accountStatus === "banned") {
+    throw new apiError(400, "Account is already banned. No changes allowed!");
+  }
+
+  user.refreshToken = null;
+  user.accountStatus = "inactive";
+  const updatedUser = await user.save({ validateBeforeSave: false });
+
+  if (!updatedUser) {
+    throw new apiError(500, "Failed to deactivate user!");
+  }
+
+  const responseData = {
+    userId: user._id,
+    refreshToken: user.refreshToken,
+    accountStatus: user.accountStatus,
+  }
+
+  res
+    .status(200)
+    .clearCookie("accessToken", accessTokenCookieOptions)
+    .clearCookie("refreshToken", refreshTokenCookieOptions)
+    .json(new apiResponse(200, responseData, "Account deactivated successfully."));
 });
 
 const deleteUserAccount = asyncHandler(async(req, res) => {

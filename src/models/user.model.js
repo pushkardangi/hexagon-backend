@@ -31,7 +31,12 @@ const userSchema = new Schema(
     refreshToken: {
       type: String,
       default: null,
-    }
+    },
+    accountStatus: {
+      type: String,
+      enum: ["active", "inactive", "banned", "deleted"],
+      default: "active",
+    },
   },
   { timestamps: true }
 );
