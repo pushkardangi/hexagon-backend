@@ -3,8 +3,12 @@ import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinaryUsingStream, deleteFileOnCloudinary } from "../utils/cloudinary.js";
+import { sendEmail } from "../utils/emailService.js";
+
+// constants
 import { maxFileSize, allowedFileTypes } from "../constants/avatar.constants.js";
 import { accessTokenCookieOptions, refreshTokenCookieOptions } from "../constants/cookieOptions.js";
+import { accountDeletetionConfirmationSubject, accountDeletetionConfirmationEmail } from "../constants/user.contants.js";
 
 const registerUser = asyncHandler(async (req, res) => {
   const { firstName, lastName = null, email, password } = req.body;
@@ -172,7 +176,6 @@ const deactivateUserAccount = asyncHandler(async(req, res) => {
 
   const responseData = {
     userId: user._id,
-    refreshToken: user.refreshToken,
     accountStatus: user.accountStatus,
   }
 
@@ -185,6 +188,64 @@ const deactivateUserAccount = asyncHandler(async(req, res) => {
 
 const deleteUserAccount = asyncHandler(async(req, res) => {
 
+  const {firstName, lastName } = req?.user;
+  const { email, password } = req?.body;
+
+  // check user authenticity
+  if (!email || !password) {
+    throw new apiError(400, "Email or Password are missing!");
+  }
+
+  const user = await User.findOne({email});
+
+  if (!user) {
+    throw new apiError(400, "User not found!");
+  }
+
+  const isPasswordValid = await user.isPasswordCorrect(password);
+
+  if (!isPasswordValid) {
+    throw new apiError(400, "Incorrect password!");
+  }
+
+  // remove user identifying data
+  // adding a random number in email, to let the user create another fresh account with the same email
+  // and keep the old data for further review on account.
+
+  const random = Math.floor(Math.random() * 9000);
+
+  const updatedUser = await User.findByIdAndUpdate(
+    user._id,
+    {
+      email: `${random}-${email}`,
+      password: null,
+      refreshToken: null,
+      accountStatus: "deleted"
+    },
+    { new: true }
+  );
+
+  if (!updatedUser) {
+    throw new apiError(500, "Failed to delete account!");
+  }
+
+  // Send a confirmation email for account deletion
+  const emailSubject = accountDeletetionConfirmationSubject;
+  const emailBody = accountDeletetionConfirmationEmail(firstName, lastName, email);
+
+  const emailSent = await sendEmail(email, emailSubject, emailBody);
+
+  const responseData = {
+    userId: updatedUser._id,
+    accountStatus: updatedUser.accountStatus,
+    emailSent: emailSent.messageId ? true : false,
+  };
+
+  res
+    .status(200)
+    .clearCookie("accessToken", accessTokenCookieOptions)
+    .clearCookie("refreshToken", refreshTokenCookieOptions)
+    .json(new apiResponse(200, responseData, "Account deleted successfully."));
 });
 
 export {

@@ -27,6 +27,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.5",
     "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.10.0",
     "openai": "^4.78.1",
     "streamifier": "^0.1.1"
   }
