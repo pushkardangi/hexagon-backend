@@ -1,3 +1,5 @@
+import jwt from "jsonwebtoken";
+
 import { User } from "../models/user.model.js";
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
@@ -8,10 +10,15 @@ import { sendEmail } from "../utils/emailService.js";
 // constants
 import { maxFileSize, allowedFileTypes } from "../constants/avatar.constants.js";
 import { accessTokenCookieOptions, refreshTokenCookieOptions } from "../constants/cookieOptions.js";
-import { accountDeletetionConfirmationSubject, accountDeletetionConfirmationEmail } from "../constants/user.contants.js";
+import {
+  emailVerificationSubject,
+  emailVerificationBody,
+  accountDeletetionEmailSubject,
+  accountDeletetionEmailBody,
+} from "../constants/user.contants.js";
 
 const registerUser = asyncHandler(async (req, res) => {
-  const { firstName, lastName = null, email, password } = req.body;
+  const { firstName, lastName = null, email, password } = req?.body;
 
   if (!firstName || !email || !password) {
     throw new apiError(400, "Required fields are missing!");
@@ -34,9 +41,36 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new apiError(500, "Error in saving data of user!");
   }
 
+  // Send an email for user email verification
+  const emailVerificationToken = jwt.sign(
+    { firstName, lastName, email },
+    process.env.EMAIL_VERIFICATION_SECRET,
+    {
+      expiresIn: process.env.EMAIL_VERIFICATION_EXPIRY,
+    }
+  );
+
+  const emailVerificationLink = process.env.ENVIRONMENT + `/api/v1/auth/verify-email?token=${emailVerificationToken}`;
+
+  const emailSubject = emailVerificationSubject;
+  const emailBody = emailVerificationBody(firstName, lastName, emailVerificationLink);
+
+  const emailSent = await sendEmail(email, emailSubject, emailBody);
+
+  if (!emailSent?.messageId) {
+    await User.deleteOne({ email });
+    throw new apiError(400, "Failed to send email verification link!")
+  }
+
+  const responseData = {
+    userId: user._id,
+    accountStatus: user.accountStatus,
+    emailSent: emailSent.messageId ? true : false,
+  };
+
   res
     .status(201)
-    .json(new apiResponse(201, {}, "User registered successfully."));
+    .json(new apiResponse(201, responseData, "User registered successfully."));
 });
 
 const getUserProfile = asyncHandler(async (req, res) => {
@@ -230,8 +264,8 @@ const deleteUserAccount = asyncHandler(async(req, res) => {
   }
 
   // Send a confirmation email for account deletion
-  const emailSubject = accountDeletetionConfirmationSubject;
-  const emailBody = accountDeletetionConfirmationEmail(firstName, lastName, email);
+  const emailSubject = accountDeletetionEmailSubject;
+  const emailBody = accountDeletetionEmailBody(firstName, lastName, email);
 
   const emailSent = await sendEmail(email, emailSubject, emailBody);
 

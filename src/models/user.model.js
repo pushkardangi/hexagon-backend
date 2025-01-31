@@ -34,8 +34,8 @@ const userSchema = new Schema(
     },
     accountStatus: {
       type: String,
-      enum: ["active", "inactive", "banned", "deleted"],
-      default: "active",
+      enum: ["unverified","active", "inactive", "banned", "deleted"],
+      default: "unverified",
     },
   },
   { timestamps: true }

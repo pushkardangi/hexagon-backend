@@ -3,7 +3,9 @@ import jwt from "jsonwebtoken";
 import { User } from "../models/user.model.js";
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
+import { sendEmail } from "../utils/emailService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { welcomeEmailSubject, welcomeEmailBody } from "../constants/user.contants.js";
 import { accessTokenCookieOptions, refreshTokenCookieOptions } from "../constants/cookieOptions.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -21,6 +23,46 @@ const generateAccessAndRefreshTokens = async (userId) => {
   }
 };
 
+const verifyUserEmail = asyncHandler(async (req, res) => {
+
+  const verificationToken = req?.query?.token;
+
+  if (!verificationToken) {
+    throw new apiError(400, "Invalid email verification link!");
+  }
+
+  const decodedInfo = jwt.verify(verificationToken, process.env.EMAIL_VERIFICATION_SECRET);
+  const { firstName, lastName, email } = decodedInfo;
+
+  if (!email) {
+    throw new apiError(400, "Verification link expired!")
+  }
+
+  const user = await User.findOneAndUpdate(
+    { email },
+    { accountStatus: "active" },
+    { new: true }
+  );
+
+  if (!user) {
+    throw new apiError(500, "Failed to verify email! Please try again!");
+  }
+
+  const emailSubject = welcomeEmailSubject;
+  const emailBody = welcomeEmailBody(firstName, lastName);
+
+  const emailSent = await sendEmail(email, emailSubject, emailBody);
+
+  if (!emailSent?.messageId) {
+    console.log("Failed to send welcome email!");
+  }
+
+  res
+    .status(200)
+    .json(new apiResponse(200, {}, "Email verified successfully."));
+
+});
+
 const loginUser = asyncHandler(async (req, res) => {
 
   const {email, password} = req.body;
@@ -33,6 +75,10 @@ const loginUser = asyncHandler(async (req, res) => {
 
   if (!user) {
     throw new apiError(404, `User not found with email: ${email}`);
+  }
+
+  if (user.accountStatus !== "active") {
+      throw new apiError(400, "User email is not verified! Check your emails!");
   }
 
   const isPasswordValid = await user.isPasswordCorrect(password);
@@ -130,6 +176,7 @@ const renewAccessAndRefreshToken = asyncHandler(async (req, res) => {
 });
 
 export {
+  verifyUserEmail,
   loginUser,
   logoutUser,
   renewAccessAndRefreshToken,
