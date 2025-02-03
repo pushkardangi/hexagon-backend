@@ -1,4 +1,4 @@
-import { website, support, logo_nobg_96 } from "./app-assets.constants.js";
+import { website, support, logo_nobg_96 } from "./assets.constants.js";
 
 const emailVerificationSubject = `Verify Email to Activate Your Hexagon Account!`;
 const emailVerificationBody = (firstName, lastName, emailVerificationLink) => {
