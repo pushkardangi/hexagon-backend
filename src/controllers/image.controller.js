@@ -103,4 +103,41 @@ const uploadImage = asyncHandler(async (req, res) => {
     .json(new apiResponse(201, {}, "Image uploaded successfully."));
 });
 
-export { generateImage, uploadImage };
+const getSavedImages = asyncHandler(async (req, res) => {
+  // TODO: get all saved images (page by page)
+
+  // get page and limit
+  // request for images (use sort, skip, limit)
+  // and fetch next 12 and then next 12
+  // request next 12 images, if hasMoreImages is true
+
+  const { page = 1, limit = 12 } = req?.query;
+  const { _id: userId, imageCount: totalImages } = req?.user;
+
+  if (totalImages === 0) {
+    return res
+      .status(200)
+      .json(new apiResponse(200, { images: [], hasMoreImages: false }, "No images found!"));
+  }
+
+  if (!userId) {
+    throw new apiError(400, "User id not found!");
+  }
+
+  const images = await Image.find({ ownerId: userId })
+    .sort({ createdAt: -1 })
+    .skip((Number(page) - 1) * Number(limit))
+    .limit(Number(limit));
+
+  res
+    .status(200)
+    .json(
+      new apiResponse(
+        200,
+        { images, totalImages, hasMoreImages: totalImages > page * limit },
+        "Images fetched successfully."
+      )
+    );
+});
+
+export { generateImage, uploadImage, getSavedImages };
