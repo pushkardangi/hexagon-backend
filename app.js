@@ -11,11 +11,11 @@ app.use(cookieParser());
 // routes
 import authRouter from "./src/routes/auth.routes.js";
 import userRouter from "./src/routes/user.routes.js";
-import dalleRouter from "./src/routes/dalle.routes.js";
+import imageRouter from "./src/routes/image.routes.js";
 
 // declaring routes
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
-app.use("/api/v1/dalle", dalleRouter);
+app.use("/api/v1/images", imageRouter);
 
 export default app;

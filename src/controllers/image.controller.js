@@ -124,7 +124,7 @@ const getSavedImages = asyncHandler(async (req, res) => {
     throw new apiError(400, "User id not found!");
   }
 
-  const images = await Image.find({ ownerId: userId })
+  const images = await Image.find({ ownerId: userId, status: "active" })
     .sort({ createdAt: -1 })
     .skip((Number(page) - 1) * Number(limit))
     .limit(Number(limit));
@@ -154,7 +154,7 @@ const trashImages = asyncHandler(async (req, res) => {
 
   const images = await Image.updateMany(
     { ownerId: userId, _id: { $in: imageIds } },
-    { $set: { status: "deleted" } }
+    { $set: { status: "trashed" } }
   );
 
   if (images.modifiedCount !== imagesToDelete) {

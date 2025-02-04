@@ -12,10 +12,12 @@ import {
   trashImages
 } from "../controllers/image.controller.js";
 
+router.use(verifyUser);
+
 // routes
-router.route("/generate-image").post(verifyUser, generateImage);
-router.route("/upload-image").post(verifyUser, uploadImage);
-router.route("/get-images").get(verifyUser, getSavedImages);
-router.route("/trash-images").delete(verifyUser, trashImages);
+router.route("/generate").post(generateImage);
+router.route("/upload").post(uploadImage);
+router.route("/saved").get(getSavedImages);
+router.route("/trash").patch(trashImages);
 
 export default router;
