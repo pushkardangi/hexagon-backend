@@ -140,4 +140,41 @@ const getSavedImages = asyncHandler(async (req, res) => {
     );
 });
 
-export { generateImage, uploadImage, getSavedImages };
+const trashImages = asyncHandler(async (req, res) => {
+  // TODO: shift images from active to trashed status
+  // update imageCount in User document
+
+  const { images: imageIds } = req?.body;
+  const { _id: userId } = req?.user;
+  const imagesToDelete = Array.isArray(imageIds) ? imageIds.length : 0;
+
+  if (!imagesToDelete) {
+    throw new apiError(400, "No image IDs provided!");
+  }
+
+  const images = await Image.updateMany(
+    { ownerId: userId, _id: { $in: imageIds } },
+    { $set: { status: "deleted" } }
+  );
+
+  if (images.modifiedCount !== imagesToDelete) {
+    throw new apiError(404, "No images found!");
+  }
+
+  await User.findByIdAndUpdate(
+    userId,
+    { $inc: { imageCount: -imagesToDelete } },
+  );
+
+  res
+    .status(200)
+    .json(new apiResponse(200, images, "Images trashed successfully."));
+});
+
+
+export {
+  generateImage,
+  uploadImage,
+  getSavedImages,
+  trashImages
+};
