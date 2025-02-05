@@ -146,29 +146,74 @@ const trashImages = asyncHandler(async (req, res) => {
 
   const { images: imageIds } = req?.body;
   const { _id: userId } = req?.user;
-  const imagesToDelete = Array.isArray(imageIds) ? imageIds.length : 0;
+  const imagesToTrash = Array.isArray(imageIds) ? imageIds.length : 0;
 
-  if (!imagesToDelete) {
+  if (!imagesToTrash) {
     throw new apiError(400, "No image IDs provided!");
   }
 
-  const images = await Image.updateMany(
-    { ownerId: userId, _id: { $in: imageIds } },
+  const updatedImages = await Image.updateMany(
+    { ownerId: userId, status: "active", _id: { $in: imageIds } },
     { $set: { status: "trashed" } }
   );
 
-  if (images.modifiedCount !== imagesToDelete) {
+  if (updatedImages.modifiedCount !== imagesToTrash) {
     throw new apiError(404, "No images found!");
   }
 
-  await User.findByIdAndUpdate(
+  const updatedImageCount = await User.findByIdAndUpdate(
     userId,
-    { $inc: { imageCount: -imagesToDelete } },
+    { $inc: { imageCount: -imagesToTrash } },
+    { new: true }
   );
 
   res
     .status(200)
-    .json(new apiResponse(200, images, "Images trashed successfully."));
+    .json(
+      new apiResponse(
+        200,
+        { imageCount: updatedImageCount.imageCount, updatedImages },
+        "Images trashed successfully."
+      )
+    );
+});
+
+const untrashImages = asyncHandler(async (req, res) => {
+  // TODO: shift images from trashed to active status
+  // update imageCount in User document
+
+  const { images: imageIds } = req?.body;
+  const { _id: userId } = req?.user;
+  const imagesToUntrash = Array.isArray(imageIds) ? imageIds.length : 0;
+
+  if (!imagesToUntrash) {
+    throw new apiError(400, "No image IDs provided!");
+  }
+
+  const updatedImages = await Image.updateMany(
+    { ownerId: userId, status: "trashed", _id: { $in: imageIds } },
+    { $set: { status: "active" } }
+  );
+
+  if (updatedImages.modifiedCount !== imagesToUntrash) {
+    throw new apiError(404, "No images found!");
+  }
+
+  const updatedImageCount = await User.findByIdAndUpdate(
+    userId,
+    { $inc: { imageCount: imagesToUntrash } },
+    { new: true }
+  );
+
+  res
+    .status(200)
+    .json(
+      new apiResponse(
+        200,
+        { imageCount: updatedImageCount.imageCount, updatedImages },
+        "Images untrashed successfully."
+      )
+    );
 });
 
 
@@ -176,5 +221,6 @@ export {
   generateImage,
   uploadImage,
   getSavedImages,
-  trashImages
+  trashImages,
+  untrashImages
 };

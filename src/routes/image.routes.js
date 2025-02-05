@@ -9,7 +9,8 @@ import {
   generateImage,
   uploadImage,
   getSavedImages,
-  trashImages
+  trashImages,
+  untrashImages,
 } from "../controllers/image.controller.js";
 
 router.use(verifyUser);
@@ -19,5 +20,6 @@ router.route("/generate").post(generateImage);
 router.route("/upload").post(uploadImage);
 router.route("/saved").get(getSavedImages);
 router.route("/trash").patch(trashImages);
+router.route("/untrash").patch(untrashImages);
 
 export default router;
