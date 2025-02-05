@@ -31,6 +31,13 @@ const uploadOnCloudinary = async (resource, resource_type, folder, tags) => {
 };
 
 const deleteFileOnCloudinary = async (publicId, resourceType = "image") => {
+
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+
   try {
     const uploading = await cloudinary.uploader.destroy(publicId, {
       resource_type: resourceType, // Explicitly set the resource type

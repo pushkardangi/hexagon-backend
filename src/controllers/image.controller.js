@@ -5,7 +5,7 @@ import { User } from "../models/user.model.js";
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteFileOnCloudinary } from "../utils/cloudinary.js";
 
 const generateImage = asyncHandler(async (req, res) => {
     const openai = new OpenAI({
@@ -216,11 +216,53 @@ const untrashImages = asyncHandler(async (req, res) => {
     );
 });
 
+const destroyImages = asyncHandler(async (req, res) => {
+  const { images: imageIds } = req.body;
+  const { _id: userId } = req.user;
+
+  if (!Array.isArray(imageIds) || imageIds.length === 0) {
+    throw new apiError(400, "No image IDs provided!");
+  }
+
+  const images = await Image.find({
+    ownerId: userId,
+    status: "trashed",
+    _id: { $in: imageIds },
+  });
+
+  if (!images.length) {
+    throw new apiError(404, "No images found!");
+  }
+
+  const cloudinaryPublicIds = images.map(img => img.publicId);
+
+  await Promise.all(cloudinaryPublicIds.map(id => deleteFileOnCloudinary(id,"image")));
+
+  const deletedImages = await Image.deleteMany(
+    { ownerId: userId, status: "trashed", _id: { $in: imageIds } },
+  );
+
+  if (deletedImages.deletedCount !== images.length) {
+    throw new apiError(500, "Image deletion failed!");
+  }
+
+  res
+    .status(200)
+    .json(
+      new apiResponse(
+        200,
+        deletedImages,
+        "Images deleted successfully."
+      )
+    );
+
+});
 
 export {
   generateImage,
   uploadImage,
   getSavedImages,
   trashImages,
-  untrashImages
+  untrashImages,
+  destroyImages,
 };

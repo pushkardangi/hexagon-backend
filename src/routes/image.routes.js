@@ -11,6 +11,7 @@ import {
   getSavedImages,
   trashImages,
   untrashImages,
+  destroyImages,
 } from "../controllers/image.controller.js";
 
 router.use(verifyUser);
@@ -21,5 +22,6 @@ router.route("/upload").post(uploadImage);
 router.route("/saved").get(getSavedImages);
 router.route("/trash").patch(trashImages);
 router.route("/untrash").patch(untrashImages);
+router.route("/destroy").delete(destroyImages);
 
 export default router;
