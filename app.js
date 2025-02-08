@@ -1,11 +1,12 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { corsOptions } from "./src/constants/auth.constants.js";
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+app.use(cors(corsOptions));
+app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 
 // routes
