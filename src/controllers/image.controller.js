@@ -44,17 +44,8 @@ const generateImage = asyncHandler(async (req, res) => {
       throw new apiError(500, "Error while generating image!");
     }
 
-    const imageResponse = {
-      image,
-      prompt,
-      model,
-      size,
-      quality,
-      style,
-    };
-
     res.status(201).json(
-        new apiResponse(201, imageResponse, "Image generated successfully.")
+        new apiResponse(201, image, "Image generated successfully.")
     );
 });
 
@@ -66,7 +57,7 @@ const uploadImage = asyncHandler(async (req, res) => {
   if (!image || !prompt || !model || !size || !quality || !style) {
     throw new apiError(400, "One or more required fields are missing!");
   }
-  if (!ownerId || !prevImageCount) {
+  if (!ownerId) {
     throw new apiError(400, "Owner details are missing!");
   }
 

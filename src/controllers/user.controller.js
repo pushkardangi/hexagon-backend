@@ -26,6 +26,10 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const userExists = await User.findOne({ email });
 
+  if (userExists?.accountStatus === "unverified") {
+    throw new apiError(400, `Please check your inbox to verify your email: ${email}`);
+  }
+
   if (userExists) {
     throw new apiError(409, `User already exists with email: ${email}`);
   }

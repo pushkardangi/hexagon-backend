@@ -78,7 +78,7 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   if (user.accountStatus !== "active") {
-      throw new apiError(400, "User email is not verified! Check your emails!");
+      throw new apiError(400, "Your email is not verified! Check your inbox to verify.");
   }
 
   const isPasswordValid = await user.isPasswordCorrect(password);
