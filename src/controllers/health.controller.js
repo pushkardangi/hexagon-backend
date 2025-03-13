@@ -5,7 +5,8 @@ const healthCheck = asyncHandler(async (req, res) => {
     .status(200)
     .json({
       success: true,
-      sampleVariable: process.env.SAMPLE_VAR,
+      message: "API is Healthy, Wealthy and Wise!",
+      var: process.env.SAMPLE_VAR,
       timestamp: new Date().toISOString(),
     });
 });
