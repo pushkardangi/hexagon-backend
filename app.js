@@ -11,6 +11,16 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 
+app.use((req, res, next) => {
+  console.time(`Request Time: ${req.method} ${req.originalUrl}`);
+
+  res.on("finish", () => {
+    console.timeEnd(`Request Time: ${req.method} ${req.originalUrl}`);
+  });
+
+  next();
+});
+
 // routes
 import authRouter from "./src/routes/auth.routes.js";
 import userRouter from "./src/routes/user.routes.js";
