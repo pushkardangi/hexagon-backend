@@ -4,11 +4,11 @@ const imageSchema = new Schema(
   {
     image: {
       type: String,
-      required: true,
+      default: null,
     },
     publicId: {
       type: String,
-      required: true,
+      default: null,
     },
     prompt: {
       type: String,
@@ -22,18 +22,17 @@ const imageSchema = new Schema(
     size: {
       type: String,
       enum: ["256x256", "512x512", "1024x1024", "1024x1792", "1792x1024"],
-      required: true,
+      default: "256"
     },
     quality: {
       type: String,
       enum: ["basic", "standard", "hd"],
       default: "basic",
-      required: true,
     },
     style: {
       type: String,
       enum: ["simple","natural", "vivid"],
-      required: true,
+      default: "simple",
     },
     ownerId: {
       type: Schema.Types.ObjectId,
@@ -42,8 +41,8 @@ const imageSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["active", "trashed", "deleted"],
-      default: "active",
+      enum: [ "prompt" ,"saved", "trashed", "deleted"],
+      default: "prompt",
     },
   },
   { timestamps: true }
