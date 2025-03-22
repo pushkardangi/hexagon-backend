@@ -17,12 +17,12 @@ const imageSchema = new Schema(
     model: {
       type: String,
       enum: ["dall-e-2", "dall-e-3"],
-      required: true,
+      default: "dall-e-2",
     },
     size: {
       type: String,
       enum: ["256x256", "512x512", "1024x1024", "1024x1792", "1792x1024"],
-      default: "256"
+      default: "256x256",
     },
     quality: {
       type: String,
