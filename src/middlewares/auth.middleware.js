@@ -24,6 +24,10 @@ export const verifyUser = asyncHandler(async (req, res, next) => {
       throw new apiError(401, "Invalid access token!");
     }
 
+    if (user.accountStatus === "banned") {
+      throw new apiError(400, "Account is banned. No changes allowed!");
+    }
+
     req.user = user;
     next();
 

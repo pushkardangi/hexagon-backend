@@ -23,7 +23,7 @@ router
   .route("/profile")
   .get(verifyUser, getUserProfile)
   .patch(verifyUser, deactivateUserAccount)
-  .delete(verifyUser, deleteUserAccount);
+  .delete(deleteUserAccount);
 
 router.patch("/update/fullname", verifyUser, updateUserFullname);
 router.patch("/update/avatar", verifyUser, upload.single("avatar"), updateUserAvatar);

@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
-import { User } from "../models/user.model.js";
+import { User, Image, ArchivedUser } from "../models/index.js";
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -193,15 +194,11 @@ const deactivateUserAccount = asyncHandler(async(req, res) => {
   const user = await User.findById(userId);
 
   if (!user) {
-    throw new apiError(404, "User not found!");
+    throw new apiError(404, "Account not found to deactivate!");
   }
 
   if (user.accountStatus === "inactive") {
     throw new apiError(400, "Account is already deactivated!");
-  }
-
-  if (user.accountStatus === "banned") {
-    throw new apiError(400, "Account is already banned. No changes allowed!");
   }
 
   user.refreshToken = null;
@@ -226,10 +223,8 @@ const deactivateUserAccount = asyncHandler(async(req, res) => {
 
 const deleteUserAccount = asyncHandler(async(req, res) => {
 
-  const {firstName, lastName } = req?.user;
-  const { email, password } = req?.body;
+  const { email, password } = req.body;
 
-  // check user authenticity
   if (!email || !password) {
     throw new apiError(400, "Email or Password are missing!");
   }
@@ -237,7 +232,18 @@ const deleteUserAccount = asyncHandler(async(req, res) => {
   const user = await User.findOne({email});
 
   if (!user) {
-    throw new apiError(400, "User not found!");
+    throw new apiError(400, "Account not found or already deleted!");
+  }
+
+  switch (user.accountStatus) {
+    case "unverified":
+      throw new apiError(400, "Account unverified! Check your inbox to verify your email.");
+
+    case "banned":
+      throw new apiError(400, "Account is banned. No changes allowed!");
+
+    default:
+      break;
   }
 
   const isPasswordValid = await user.isPasswordCorrect(password);
@@ -246,44 +252,75 @@ const deleteUserAccount = asyncHandler(async(req, res) => {
     throw new apiError(400, "Incorrect password!");
   }
 
-  // remove user identifying data
-  // adding a random number in email, to let the user create another fresh account with the same email
-  // and keep the old data for further review on account.
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  const random = Math.floor(Math.random() * 9000);
+  try {
 
-  const updatedUser = await User.findByIdAndUpdate(
-    user._id,
-    {
-      email: `${random}-${email}`,
-      password: null,
-      refreshToken: null,
-      accountStatus: "deleted"
-    },
-    { new: true }
-  );
+    const { _id, firstName, lastName, avatar, imageCount } = user;
 
-  if (!updatedUser) {
-    throw new apiError(500, "Failed to delete account!");
+    // archive all images of the user
+    await Image.updateMany({ ownerId: _id }, { status: "archived" }, { session });
+
+    // IMPROVE // remove existing archived record
+    await ArchivedUser.findOneAndDelete({ email }, { session });
+
+    const [newArchivedUser] = await ArchivedUser.create(
+      [
+        {
+          _id,
+          firstName,
+          lastName,
+          email,
+          avatar,
+          imageCount,
+          accountStatus: "deleted",
+        },
+      ],
+      { session }
+    );
+
+    if (!newArchivedUser) {
+      throw new apiError(500, "Failed to archive account!");
+    }
+
+    const deletedUser = await User.findByIdAndDelete(_id, { session });
+
+    if (!deletedUser) {
+      throw new apiError(500, "Failed to delete account!");
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    let emailSent = false;
+    try {
+      const emailSubject = accountDeletetionEmailSubject;
+      const emailBody = accountDeletetionEmailBody(firstName, lastName, email);
+      const emailResponse = await sendEmail(email, emailSubject, emailBody);
+      emailSent = emailResponse?.messageId ? true : false;
+    } catch (err) {
+      console.error("⚠ Failed to send account deletion email:", err);
+    }
+
+    const responseData = {
+      userId: newArchivedUser._id,
+      accountStatus: newArchivedUser.accountStatus,
+      emailSent,
+    };
+
+    return res
+      .status(200)
+      .clearCookie("accessToken", accessTokenCookieOptions)
+      .clearCookie("refreshToken", refreshTokenCookieOptions)
+      .json(new apiResponse(200, responseData, "Account deleted successfully."));
+
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw new apiError(500, error.message || "Account deletion failed!");
   }
 
-  // Send a confirmation email for account deletion
-  const emailSubject = accountDeletetionEmailSubject;
-  const emailBody = accountDeletetionEmailBody(firstName, lastName, email);
-
-  const emailSent = await sendEmail(email, emailSubject, emailBody);
-
-  const responseData = {
-    userId: updatedUser._id,
-    accountStatus: updatedUser.accountStatus,
-    emailSent: emailSent.messageId ? true : false,
-  };
-
-  res
-    .status(200)
-    .clearCookie("accessToken", accessTokenCookieOptions)
-    .clearCookie("refreshToken", refreshTokenCookieOptions)
-    .json(new apiResponse(200, responseData, "Account deleted successfully."));
 });
 
 export {
