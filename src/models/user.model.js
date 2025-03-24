@@ -21,6 +21,10 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
+    credits: {
+      type: Number,
+      default: 0,
+    },
     avatar: {
       type: String,
       default: null,

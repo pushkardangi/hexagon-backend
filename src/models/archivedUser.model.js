@@ -23,6 +23,10 @@ const archivedUserSchema = new Schema(
       type: String,
       default: null,
     },
+    credits: {
+      type: Number,
+      default: 0,
+    },
     avatar: {
       type: String,
       default: null,

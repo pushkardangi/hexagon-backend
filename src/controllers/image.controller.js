@@ -1,11 +1,12 @@
 import OpenAI from "openai";
-import { Image } from "../models/image.model.js";
-import { User } from "../models/user.model.js";
+import mongoose from "mongoose";
 
+import { User, Image } from "../models/index.js";
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary, deleteFileOnCloudinary } from "../utils/cloudinary.js";
+import { imageGenerationCost } from "../constants/cost.constants.js";
 
 const generateImage = asyncHandler(async (req, res) => {
 
@@ -15,55 +16,78 @@ const generateImage = asyncHandler(async (req, res) => {
   if (!prompt) throw new apiError(400, "Prompt is required!");
   if (!userId) throw new apiError(400, "User ID is required!");
 
-  let imageConfig = {
-    prompt,
-    model,
-    size,
-    n: 1,
-    response_format: "url",
-    user: userId,
-  };
+  const cost = model === "dall-e-2"
+    ? imageGenerationCost[model]?.[size] ?? 0
+    : imageGenerationCost[model]?.[quality]?.[size] ?? 0;
 
-  if (model === "dall-e-3") {
-    if (quality) imageConfig.quality = quality;
-    if (style) imageConfig.style = style;
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const user = await User.findById(userId).session(session);
+
+    if (cost > user.credits) {
+      throw new apiError(400, "Not enough credits to generate the image!");
+    }
+
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openaiResponse = await openai.images.generate({
+      prompt,
+      model,
+      size,
+      n: 1,
+      response_format: "url",
+      user: userId,
+      ...(model === "dall-e-3" && { quality, style }),
+    });
+    const image = openaiResponse?.data?.[0]?.url;
+
+    if (!image) {
+      throw new apiError(500, "Failed to generate image. Please try again!");
+    }
+
+    user.credits -= cost;
+    user.imageCount += 1;
+
+    await user.save({ validateBeforeSave: false, session });
+
+    const savedImage = await Image.create(
+      [
+        { image: null, publicId: null, prompt, model, size, quality, style, ownerId: userId }
+      ],
+      { session }
+    );
+
+    if (!savedImage) {
+      throw new apiError(500, "Failed to save image information!");
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    const responseData = {
+      imageId: savedImage[0]._id,
+      imageUrl: image
+    };
+
+    return res
+      .status(201)
+      .json(new apiResponse( 201, responseData, "Image generated successfully."));
+
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw new apiError(500, error.message || "Image generation failed!");
   }
 
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const openaiResponse = await openai.images.generate(imageConfig);
-  const image = openaiResponse?.data?.[0]?.url;
-
-  if (!image) {
-    throw new apiError(500, "Failed to generate image. Please try again!");
-  }
-
-  const savedImage = await Image.create({
-    image: null,
-    publicId: null,
-    prompt,
-    model,
-    size,
-    quality,
-    style,
-    ownerId: userId,
-  });
-
-  if (!savedImage) {
-    throw new apiError(500, "Failed to save image information!")
-  }
-
-  return res.status(201).json(
-    new apiResponse(201, { imageId: savedImage._id, imageUrl: image }, "Image generated successfully.")
-  );
 });
 
 const uploadImage = asyncHandler(async (req, res) => {
 
   const { imageUrl, imageId } = req?.body ?? {};
-  const { _id: ownerId, imageCount: prevImageCount } = req?.user ?? {};
 
-  if (!imageUrl || !mongoose.isValidObjectId(imageId) || !ownerId) {
-    throw new apiError(400, "Image URL, Image ID, and Owner ID are required!");
+  if (!imageUrl || !mongoose.isValidObjectId(imageId)) {
+    throw new apiError(400, "Image URL and Image ID are required!");
   }
 
   const image = await Image.findById(imageId);
@@ -91,12 +115,6 @@ const uploadImage = asyncHandler(async (req, res) => {
     throw new apiError(500, "Failed to save image information!")
   }
 
-  const updatedImageCount = await User.findByIdAndUpdate(ownerId, { $inc: { imageCount: 1 } }, { new: true });
-
-  if (!updatedImageCount || updatedImageCount.imageCount <= prevImageCount) {
-    throw new apiError(500, "Failed to update image count!");
-  }
-
   return res
     .status(201)
     .json(new apiResponse(201, {}, "Image uploaded successfully."));
@@ -111,7 +129,7 @@ const getSavedImages = asyncHandler(async (req, res) => {
   // request next 12 images, if hasMoreImages is true
 
   const { page = 1, limit = 12 } = req?.query;
-  const { _id: userId, imageCount: totalImages } = req?.user;
+  const { _id: userId } = req?.user;
 
   if (totalImages === 0) {
     return res
@@ -141,7 +159,6 @@ const getSavedImages = asyncHandler(async (req, res) => {
 
 const trashImages = asyncHandler(async (req, res) => {
   // TODO: shift images from active to trashed status
-  // update imageCount in User document
 
   const { images: imageIds } = req?.body;
   const { _id: userId } = req?.user;
@@ -157,29 +174,16 @@ const trashImages = asyncHandler(async (req, res) => {
   );
 
   if (updatedImages.modifiedCount !== imagesToTrash) {
-    throw new apiError(404, "No images found!");
+    throw new apiError(404, "No images found to trash!");
   }
 
-  const updatedImageCount = await User.findByIdAndUpdate(
-    userId,
-    { $inc: { imageCount: -imagesToTrash } },
-    { new: true }
-  );
-
-  res
+  return res
     .status(200)
-    .json(
-      new apiResponse(
-        200,
-        { imageCount: updatedImageCount.imageCount, updatedImages },
-        "Images trashed successfully."
-      )
-    );
+    .json(new apiResponse(200, updatedImages, "Images trashed successfully."));
 });
 
 const untrashImages = asyncHandler(async (req, res) => {
   // TODO: shift images from trashed to active status
-  // update imageCount in User document
 
   const { images: imageIds } = req?.body;
   const { _id: userId } = req?.user;
@@ -195,24 +199,12 @@ const untrashImages = asyncHandler(async (req, res) => {
   );
 
   if (updatedImages.modifiedCount !== imagesToUntrash) {
-    throw new apiError(404, "No images found!");
+    throw new apiError(404, "No images found to untrash!");
   }
 
-  const updatedImageCount = await User.findByIdAndUpdate(
-    userId,
-    { $inc: { imageCount: imagesToUntrash } },
-    { new: true }
-  );
-
-  res
+  return res
     .status(200)
-    .json(
-      new apiResponse(
-        200,
-        { imageCount: updatedImageCount.imageCount, updatedImages },
-        "Images untrashed successfully."
-      )
-    );
+    .json(new apiResponse(200, updatedImages, "Images untrashed successfully."));
 });
 
 const destroyImages = asyncHandler(async (req, res) => {

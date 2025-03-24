@@ -257,7 +257,7 @@ const deleteUserAccount = asyncHandler(async(req, res) => {
 
   try {
 
-    const { _id, firstName, lastName, avatar, imageCount } = user;
+    const { _id, firstName, lastName, credits, avatar, imageCount } = user;
 
     // archive all images of the user
     await Image.updateMany({ ownerId: _id }, { status: "archived" }, { session });
@@ -272,6 +272,7 @@ const deleteUserAccount = asyncHandler(async(req, res) => {
           firstName,
           lastName,
           email,
+          credits,
           avatar,
           imageCount,
           accountStatus: "deleted",
