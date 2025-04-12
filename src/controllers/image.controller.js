@@ -121,40 +121,44 @@ const uploadImage = asyncHandler(async (req, res) => {
 });
 
 const getSavedImages = asyncHandler(async (req, res) => {
-  // TODO: get all saved images (page by page)
+  // get pagination params from query
+  const page = Math.max(1, parseInt(req?.query?.page, 10) || 1);
+  const limit = Math.max(1, parseInt(req?.query?.limit, 10) || 12);
 
-  // get page and limit
-  // request for images (use sort, skip, limit)
-  // and fetch next 12 and then next 12
-  // request next 12 images, if hasMoreImages is true
-
-  const { page = 1, limit = 12 } = req?.query;
-  const { _id: userId } = req?.user;
-
-  if (totalImages === 0) {
-    return res
-      .status(200)
-      .json(new apiResponse(200, { images: [], hasMoreImages: false }, "No images found!"));
-  }
+  // get logged-in user's ID
+  const { _id: userId } = req?.user || {};
 
   if (!userId) {
     throw new apiError(400, "User id not found!");
   }
 
+  // fetch total count for pagination logic
+  const totalImages = await Image.countDocuments({ ownerId: userId, status: "saved" });
+
+  if (totalImages === 0) {
+    return res
+      .status(200)
+      .json(new apiResponse(200, { images: [], hasMoreImages: false, totalImages }, "No images found!"));
+  }
+
+  // calculate skip value
+  const skip = (page - 1) * limit;
+
+  // fetch paginated images
   const images = await Image.find({ ownerId: userId, status: "saved" })
     .sort({ createdAt: -1 })
-    .skip((Number(page) - 1) * Number(limit))
-    .limit(Number(limit));
+    .skip(skip)
+    .limit(limit);
 
-  res
-    .status(200)
-    .json(
-      new apiResponse(
-        200,
-        { images, totalImages, hasMoreImages: totalImages > page * limit },
-        "Images fetched successfully."
-      )
-    );
+  const hasMoreImages = totalImages > page * limit;
+
+  res.status(200).json(
+    new apiResponse(
+      200,
+      { images, hasMoreImages, totalImages },
+      "Images fetched successfully."
+    )
+  );
 });
 
 const trashImages = asyncHandler(async (req, res) => {
