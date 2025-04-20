@@ -27,7 +27,7 @@ const generateImage = asyncHandler(async (req, res) => {
     const user = await User.findById(userId).session(session);
 
     if (cost > user.credits) {
-      throw new apiError(400, "Not enough credits to generate the image!");
+      throw new apiError(400, "Insufficient credits to generate the image!");
     }
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
