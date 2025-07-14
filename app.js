@@ -6,6 +6,7 @@ import apiLimiter from "./src/middlewares/rateLimiter.middleware.js";
 
 const app = express();
 
+app.set("trust proxy", 1); // for render
 app.use(apiLimiter);
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "10mb" }));
