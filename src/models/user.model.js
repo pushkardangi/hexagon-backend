@@ -4,6 +4,11 @@ import jwt from "jsonwebtoken";
 
 const userSchema = new Schema(
   {
+    role: {
+      type: String,
+      enum: ["user", "admin", "support"],
+      default: "user",
+    },
     firstName: {
       type: String,
       required: true,
@@ -39,7 +44,7 @@ const userSchema = new Schema(
     },
     accountStatus: {
       type: String,
-      enum: ["unverified","active", "inactive", "banned", "deleted"],
+      enum: ["unverified", "active", "inactive", "banned", "deleted"],
       default: "unverified",
     },
   },
@@ -82,6 +87,7 @@ userSchema.methods.generateAccessToken = function () {
       email: this.email,
       firstName: this.firstName,
       lastName: this.lastName,
+      role: this.role,
     },
     process.env.ACCESS_TOKEN_SECRET,
     {

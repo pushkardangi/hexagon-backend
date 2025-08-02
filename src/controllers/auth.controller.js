@@ -92,8 +92,8 @@ const loginUser = asyncHandler(async (req, res) => {
   user.refreshToken = refreshToken;
   await user.save({ validateBeforeSave: false });
 
-  const {_id, firstName, lastName, avatar, imageCount, createdAt, updatedAt} = user;
-  const loggedInUser = {_id, firstName, lastName, email, avatar, imageCount, createdAt, updatedAt};
+  const {_id, role, firstName, lastName, avatar, imageCount, createdAt, updatedAt} = user;
+  const loggedInUser = {_id, role, firstName, lastName, email, avatar, imageCount, createdAt, updatedAt};
 
   res
     .status(200)

@@ -23,6 +23,10 @@ const redeemCodeSchema = new Schema({
     type: Date,
     default: null,
   },
+  expiresAt: {
+    type: Date,
+    required: true,
+  },
 });
 
 export const RedeemCode = mongoose.model("RedeemCode", redeemCodeSchema);
