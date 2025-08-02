@@ -13,7 +13,12 @@ const redeemCode = asyncHandler(async (req, res) => {
     const redeem = await RedeemCode.findOne({ code: code.trim() });
 
     if (!redeem) {
-      return res.status(404).json({ message: "Invalid or expired code." });
+      return res.status(404).json({ message: "Invalid redeem code." });
+    }
+
+    // Check if expired
+    if (redeem.expiresAt && redeem.expiresAt <= new Date()) {
+      return res.status(410).json({ message: "This redeem code has expired." });
     }
 
     if (redeem.used) {
