@@ -10,7 +10,7 @@ const redeemCodeSchema = new Schema({
     type: Number,
     required: true,
   },
-  used: {
+  isUsed: {
     type: Boolean,
     default: false,
   },
