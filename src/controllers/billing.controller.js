@@ -21,7 +21,7 @@ const redeemCode = asyncHandler(async (req, res) => {
       return res.status(410).json({ message: "This redeem code has expired." });
     }
 
-    if (redeem.used) {
+    if (redeem.isUsed) {
       return res
         .status(409)
         .json({ message: "This code has already been used." });
@@ -33,7 +33,7 @@ const redeemCode = asyncHandler(async (req, res) => {
     await user.save();
 
     // Mark redeem code as used
-    redeem.used = true;
+    redeem.isUsed = true;
     redeem.usedBy = userId;
     redeem.usedAt = new Date();
     await redeem.save();
