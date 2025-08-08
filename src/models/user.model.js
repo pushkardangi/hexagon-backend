@@ -47,6 +47,14 @@ const userSchema = new Schema(
       enum: ["unverified", "active", "inactive", "banned", "deleted"],
       default: "unverified",
     },
+    passwordResetOTP: {
+      type: Number,
+      default: null,
+    },
+    passwordResetExpiry: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

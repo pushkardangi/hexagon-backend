@@ -1,12 +1,21 @@
 import jwt from "jsonwebtoken";
 
 import { User } from "../models/user.model.js";
-import { apiError } from "../utils/apiError.js";
-import { apiResponse } from "../utils/apiResponse.js";
-import { sendEmail } from "../utils/emailService.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { welcomeEmailSubject, welcomeEmailBody } from "../constants/user.contants.js";
-import { accessTokenCookieOptions, refreshTokenCookieOptions } from "../constants/cookieOptions.js";
+import {
+  asyncHandler,
+  apiResponse,
+  apiError,
+  sendEmail,
+  generateOTP,
+} from "../utils/index.js";
+import {
+  welcomeEmailSubject,
+  welcomeEmailBody,
+} from "../constants/user.contants.js";
+import {
+  accessTokenCookieOptions,
+  refreshTokenCookieOptions,
+} from "../constants/cookieOptions.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -24,18 +33,20 @@ const generateAccessAndRefreshTokens = async (userId) => {
 };
 
 const verifyUserEmail = asyncHandler(async (req, res) => {
-
   const verificationToken = req?.query?.token;
 
   if (!verificationToken) {
     throw new apiError(400, "Invalid email verification link!");
   }
 
-  const decodedInfo = jwt.verify(verificationToken, process.env.EMAIL_VERIFICATION_SECRET);
+  const decodedInfo = jwt.verify(
+    verificationToken,
+    process.env.EMAIL_VERIFICATION_SECRET
+  );
   const { firstName, lastName, email } = decodedInfo;
 
   if (!email) {
-    throw new apiError(400, "Verification link expired!")
+    throw new apiError(400, "Verification link expired!");
   }
 
   const user = await User.findOneAndUpdate(
@@ -60,12 +71,10 @@ const verifyUserEmail = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new apiResponse(200, {}, "Email verified successfully."));
-
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-
-  const {email, password} = req.body;
+  const { email, password } = req.body;
 
   if (!email || !password) {
     throw new apiError(400, "Email or Password are missing!");
@@ -78,29 +87,53 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   if (user.accountStatus !== "active") {
-      throw new apiError(400, "Your email is not verified! Check your inbox to verify.");
+    throw new apiError(
+      400,
+      "Your email is not verified! Check your inbox to verify."
+    );
   }
 
   const isPasswordValid = await user.isPasswordCorrect(password);
 
   if (!isPasswordValid) {
-    throw new apiError(401, "Incorrect password. Please try again.")
+    throw new apiError(401, "Incorrect password. Please try again.");
   }
 
-  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+    user._id
+  );
 
   user.refreshToken = refreshToken;
   await user.save({ validateBeforeSave: false });
 
-  const {_id, role, firstName, lastName, avatar, imageCount, createdAt, updatedAt} = user;
-  const loggedInUser = {_id, role, firstName, lastName, email, avatar, imageCount, createdAt, updatedAt};
+  const {
+    _id,
+    role,
+    firstName,
+    lastName,
+    avatar,
+    imageCount,
+    createdAt,
+    updatedAt,
+  } = user;
+
+  const loggedInUser = {
+    _id,
+    role,
+    firstName,
+    lastName,
+    email,
+    avatar,
+    imageCount,
+    createdAt,
+    updatedAt,
+  };
 
   res
     .status(200)
     .cookie("accessToken", accessToken, accessTokenCookieOptions)
     .cookie("refreshToken", refreshToken, refreshTokenCookieOptions)
     .json(new apiResponse(200, loggedInUser, "User logged in successfully."));
-
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
@@ -124,17 +157,17 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 const renewAccessAndRefreshToken = asyncHandler(async (req, res) => {
-// TODO:
-// - access token expires → Server sends a 401 (Unauthorized).
-// - client hits the "renew tokens" endpoint.
-// - check the validity of the refresh token:
-//    - if invalid, prompt the user to log in.
-//    - if valid, continue to the next steps.
-// - find the user using their `_id`.
-// - verify the refresh token matches the one stored in the database (for added security).
-// - if they match, generate new access and refresh tokens.
-// - save the new refresh token in the database.
-// - send both access and refresh tokens to the client in HTTP-only cookies.
+  // Summary:
+  // - access token expires → Server sends a 401 (Unauthorized).
+  // - client hits the "renew tokens" endpoint.
+  // - check the validity of the refresh token:
+  //    - if invalid, prompt the user to log in.
+  //    - if valid, continue to the next steps.
+  // - find the user using their `_id`.
+  // - verify the refresh token matches the one stored in the database (for added security).
+  // - if they match, generate new access and refresh tokens.
+  // - save the new refresh token in the database.
+  // - send both access and refresh tokens to the client in HTTP-only cookies.
 
   const token = req?.cookies?.refreshToken;
 
@@ -155,16 +188,18 @@ const renewAccessAndRefreshToken = asyncHandler(async (req, res) => {
     throw new apiError(404, "User not found. Unable to renew tokens!");
   }
 
-  if (token !== user.refreshToken){
+  if (token !== user.refreshToken) {
     throw new apiError(401, "Refresh token mismatch. Please log in again!");
   }
 
-  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+    user._id
+  );
 
   user.refreshToken = refreshToken;
   const userSaved = await user.save({ validateBeforeSave: false });
 
-  if (!userSaved){
+  if (!userSaved) {
     throw new apiError(500, "Failed to save the refresh token!");
   }
 
@@ -172,7 +207,80 @@ const renewAccessAndRefreshToken = asyncHandler(async (req, res) => {
     .status(200)
     .cookie("accessToken", accessToken, accessTokenCookieOptions)
     .cookie("refreshToken", refreshToken, refreshTokenCookieOptions)
-    .json(new apiResponse(200, {}, "Access and refresh tokens renewed successfully."));
+    .json(
+      new apiResponse(
+        200,
+        {},
+        "Access and refresh tokens renewed successfully."
+      )
+    );
+});
+
+const getPasswordResetOTP = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new apiError(400, "Email is required");
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new apiError(404, "User not found with the provided email");
+  }
+
+  const otp = generateOTP();
+  const otpExpiry = Date.now() + 5 * 60 * 1000;
+
+  user.passwordResetOTP = otp;
+  user.passwordResetExpiry = new Date(otpExpiry);
+  await user.save({ validateBeforeSave: false });
+
+  const subject = "Hexagon | Reset your password";
+  const body = `Your OTP to reset your password is: ${otp}\nThis OTP is valid for 10 minutes.`;
+
+  const emailSent = await sendEmail(email, subject, body);
+
+  if (!emailSent?.messageId) {
+    throw new apiError(500, "Failed to send OTP email. Try again.");
+  }
+
+  res
+    .status(200)
+    .json(new apiResponse(200, {}, "OTP sent to your email successfully."));
+});
+
+const verifyOTPAndResetPassword = asyncHandler(async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+
+  if (!email || !otp || !newPassword) {
+    throw new apiError(400, "Email, OTP, and new password are required!");
+  }
+
+  const user = await User.findOne({ email });
+
+  // server deletes OTP on expiration
+  if (!user || !user.passwordResetOTP || !user.passwordResetExpiry) {
+    throw new apiError(400, "Invalid or expired OTP");
+  }
+
+  const parsedOTP = Number(otp);
+
+  if (user.passwordResetOTP !== parsedOTP) {
+    throw new apiError(400, "Incorrect OTP");
+  }
+
+  if (user.passwordResetExpiry < new Date()) {
+    throw new apiError(400, "Expired OTP");
+  }
+
+  user.password = newPassword;
+  user.passwordResetOTP = null;
+  user.passwordResetExpiry = null;
+
+  await user.save();
+
+  res.status(200).json(new apiResponse(200, {}, "Password reset successful"));
 });
 
 export {
@@ -180,4 +288,6 @@ export {
   loginUser,
   logoutUser,
   renewAccessAndRefreshToken,
+  getPasswordResetOTP,
+  verifyOTPAndResetPassword,
 };
