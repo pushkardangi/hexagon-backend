@@ -20,7 +20,7 @@ import {
   billingRouter,
   healthRouter,
   redeemCodeRouter,
-  adminUsersRouter,
+  userManagementRouter,
 } from "./src/routes/index.js";
 
 // declaring routes
@@ -30,7 +30,7 @@ app.use("/api/v1/images", imageRouter);
 app.use("/api/v1/billing", billingRouter);
 
 app.use("/api/v1/admin", redeemCodeRouter);
-app.use("/api/v1/admin", adminUsersRouter);
+app.use("/api/v1/admin", userManagementRouter);
 app.use("/api/v1/health", healthRouter);
 
 export default app;
