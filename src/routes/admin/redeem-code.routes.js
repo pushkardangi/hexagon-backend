@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { isAdmin } from "../middlewares/admin.middleware.js";
+import { isAdmin } from "../../middlewares/admin.middleware.js";
 import {
   getRedeemCodeInfo,
   createRedeemCode,
@@ -8,7 +8,7 @@ import {
   getAllRedeemCodes,
   generateBulkRedeemCodes,
   deleteBulkRedeemCodes,
-} from "../controllers/admin.controller.js";
+} from "../../controllers/index.js";
 
 const router = Router();
 router.use(isAdmin);

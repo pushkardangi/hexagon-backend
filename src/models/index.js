@@ -1,6 +1,4 @@
-import { User } from "./user.model.js";
-import { Image } from "./image.model.js";
-import { ArchivedUser } from "./archivedUser.model.js";
-import { RedeemCode } from "./redeemCode.model.js";
-
-export { User, Image, ArchivedUser, RedeemCode };
+export { User } from "./user.model.js";
+export { Image } from "./image.model.js";
+export { ArchivedUser } from "./archivedUser.model.js";
+export { RedeemCode } from "./redeemCode.model.js";

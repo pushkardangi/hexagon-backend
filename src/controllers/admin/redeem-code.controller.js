@@ -1,8 +1,6 @@
 import mongoose from "mongoose";
-import { RedeemCode } from "../models/index.js";
-import { apiError } from "../utils/apiError.js";
-import { apiResponse } from "../utils/apiResponse.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { RedeemCode } from "../../models/index.js";
+import { asyncHandler, apiResponse, apiError } from "../../utils/index.js";
 
 // Creates a new redeem code with given code, credits, and expiry date.
 // Validates required fields, checks for duplicates, and stores it in the database.

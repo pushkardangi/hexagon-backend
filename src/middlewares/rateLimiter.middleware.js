@@ -1,6 +1,6 @@
 import rateLimit from "express-rate-limit";
 
-const apiLimiter = rateLimit({
+export const apiLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 min
   max: 100,
   message: {
@@ -11,5 +11,3 @@ const apiLimiter = rateLimit({
   standardHeaders: "draft-7",
   legacyHeaders: false,
 });
-
-export default apiLimiter;
