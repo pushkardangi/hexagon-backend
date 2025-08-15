@@ -11,6 +11,8 @@ import {
 import {
   welcomeEmailSubject,
   welcomeEmailBody,
+  passwordResetOtpEmailSubject,
+  passwordResetOtpEmailBody,
 } from "../constants/user.contants.js";
 import {
   accessTokenCookieOptions,
@@ -236,8 +238,8 @@ const getPasswordResetOTP = asyncHandler(async (req, res) => {
   user.passwordResetExpiry = new Date(otpExpiry);
   await user.save({ validateBeforeSave: false });
 
-  const subject = "Hexagon | Reset your password";
-  const body = `Your OTP to reset your password is: ${otp}\nThis OTP is valid for 10 minutes.`;
+  const subject = passwordResetOtpEmailSubject;
+  const body = passwordResetOtpEmailBody(user.firstName, user.lastName, otp);
 
   const emailSent = await sendEmail(email, subject, body);
 
