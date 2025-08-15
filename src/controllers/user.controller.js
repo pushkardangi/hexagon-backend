@@ -14,8 +14,8 @@ import { accessTokenCookieOptions, refreshTokenCookieOptions } from "../constant
 import {
   emailVerificationSubject,
   emailVerificationBody,
-  accountDeletetionEmailSubject,
-  accountDeletetionEmailBody,
+  accountDeletionEmailSubject,
+  accountDeletionEmailBody,
 } from "../constants/user.contants.js";
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -296,12 +296,12 @@ const deleteUserAccount = asyncHandler(async(req, res) => {
 
     let emailSent = false;
     try {
-      const emailSubject = accountDeletetionEmailSubject;
-      const emailBody = accountDeletetionEmailBody(firstName, lastName, email);
+      const emailSubject = accountDeletionEmailSubject;
+      const emailBody = accountDeletionEmailBody(firstName, lastName, email);
       const emailResponse = await sendEmail(email, emailSubject, emailBody);
       emailSent = emailResponse?.messageId ? true : false;
-    } catch (err) {
-      console.error("⚠ Failed to send account deletion email:", err);
+    } catch (error) {
+      throw new apiError(500, `⚠ Failed to send account deletion email: ${error}`)
     }
 
     const responseData = {
