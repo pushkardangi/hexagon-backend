@@ -8,3 +8,5 @@ export {
   getAllRedeemCodes,
   deleteBulkRedeemCodes,
 } from "./admin/redeem-code.controller.js";
+
+export { createBugReport } from "./bug.controller.js";

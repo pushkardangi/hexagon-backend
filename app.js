@@ -21,6 +21,7 @@ import {
   healthRouter,
   redeemCodeRouter,
   userManagementRouter,
+  bugReportRouter,
 } from "./src/routes/index.js";
 
 // declaring routes
@@ -28,6 +29,7 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/images", imageRouter);
 app.use("/api/v1/billing", billingRouter);
+app.use("/api/v1/bugs", bugReportRouter);
 
 app.use("/api/v1/admin", redeemCodeRouter);
 app.use("/api/v1/admin", userManagementRouter);
