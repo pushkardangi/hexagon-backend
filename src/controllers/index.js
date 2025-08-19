@@ -8,7 +8,12 @@ export {
   getAllRedeemCodes,
   deleteBulkRedeemCodes,
 } from "./admin/redeem-code.controller.js";
-export { getAllFeatures } from "./support.admin.controller.js";
+export {
+  getFeatureById,
+  updateFeature,
+  deleteFeature,
+  getFeaturesByFilter,
+} from "./support.admin.controller.js";
 
 export { createBugReport } from "./bug.controller.js";
 export { submitFeature } from "./support.controller.js";
