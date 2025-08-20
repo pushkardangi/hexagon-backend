@@ -115,6 +115,7 @@ const loginUser = asyncHandler(async (req, res) => {
     lastName,
     avatar,
     imageCount,
+    credits,
     createdAt,
     updatedAt,
   } = user;
@@ -127,6 +128,7 @@ const loginUser = asyncHandler(async (req, res) => {
     email,
     avatar,
     imageCount,
+    credits: parseFloat(credits).toFixed(2),
     createdAt,
     updatedAt,
   };
