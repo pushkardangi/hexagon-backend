@@ -17,6 +17,7 @@ import {
   authRouter,
   userRouter,
   imageRouter,
+  adminImageRouter,
   billingRouter,
   healthRouter,
   redeemCodeRouter,
@@ -37,6 +38,7 @@ app.use("/api/v1/support", supportRouter);
 app.use("/api/v1/admin", redeemCodeRouter);
 app.use("/api/v1/admin", userManagementRouter);
 app.use("/api/v1/admin/support", adminSupportRouter);
+app.use("/api/v1/admin/images", adminImageRouter);
 app.use("/api/v1/health", healthRouter);
 
 export default app;

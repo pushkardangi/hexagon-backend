@@ -14,6 +14,15 @@ export {
   deleteFeature,
   getFeaturesByFilter,
 } from "./support.admin.controller.js";
+export {
+  getAllImages,
+  bulkUpdateStatus,
+  bulkDeleteImages,
+  getImageById,
+  updateImageStatus,
+  deleteImagePermanently,
+  getImageAnalytics,
+} from "./image.admin.controller.js";
 
 export { createBugReport } from "./bug.controller.js";
 export { submitFeature } from "./support.controller.js";

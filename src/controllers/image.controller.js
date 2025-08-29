@@ -107,7 +107,7 @@ const uploadImage = asyncHandler(async (req, res) => {
 
   image.image = secure_url;
   image.publicId = public_id;
-  image.status = "saved";
+  image.status = "active";
 
   const savedImage = await image.save({ validateBeforeSave: false });
 
@@ -133,7 +133,7 @@ const getSavedImages = asyncHandler(async (req, res) => {
   }
 
   // fetch total count for pagination logic
-  const totalImages = await Image.countDocuments({ ownerId: userId, status: "saved" });
+  const totalImages = await Image.countDocuments({ ownerId: userId, status: "active" });
 
   if (totalImages === 0) {
     return res
@@ -145,7 +145,7 @@ const getSavedImages = asyncHandler(async (req, res) => {
   const skip = (page - 1) * limit;
 
   // fetch paginated images
-  const images = await Image.find({ ownerId: userId, status: "saved" })
+  const images = await Image.find({ ownerId: userId, status: "active" })
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);

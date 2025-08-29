@@ -41,14 +41,14 @@ const imageSchema = new Schema(
     },
     status: {
       type: String,
-      enum: [ "prompt" ,"saved", "trashed", "archived", "deleted"],
+      enum: [ "prompt" ,"active", "trashed", "archived", "deleted"],
       default: "prompt",
     },
   },
   { timestamps: true }
 );
 
-// index for -> status = "saved"
-imageSchema.index({ status: 1 }, { partialFilterExpression: { status: "saved" } });
+// index for -> status = "active"
+imageSchema.index({ status: 1 }, { partialFilterExpression: { status: "active" } });
 
 export const Image = mongoose.model("Image", imageSchema);
