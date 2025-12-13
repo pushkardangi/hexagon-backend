@@ -16,8 +16,8 @@ export const sendEmail = async (to, subject, email_body) => {
         pass: process.env.EMAIL_PASSWORD,
       },
       // Add connection timeout settings
-      connectionTimeout: 5000,
-      socketTimeout: 5000,
+      // connectionTimeout: 5000,
+      // socketTimeout: 5000,
     });
 
     const mailOptions = {
